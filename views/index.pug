@@ -1,0 +1,26 @@
+doctype html
+html(lang="en")
+  head
+    title CIP Custom Token Login
+    meta(charset='utf-8')
+    link(rel="stylesheet", href="/static/main.css")
+    script(src="/static/app.js")
+    script(src="https://www.gstatic.com/firebasejs/8.0.0/firebase-app.js")
+    script(src="https://www.gstatic.com/firebasejs/8.0.0/firebase-auth.js")
+  body
+    div.title Login
+      div.row
+        div.col-25
+          span.label username
+        div.col-75
+          input(type="text", id="user")
+      div.row
+        div.col-25
+          span.label password
+        div.col-75
+          input(type="password", id="password")
+      div.row
+        div.submit
+          button(type="button", name="login", value="login", onclick="login()") login
+
+    div.output(id="output")
