@@ -1,19 +1,3 @@
-function sendRequest(method, url, body) {
-    const xhr = new XMLHttpRequest();
-
-    xhr.open(method, url, true);
-    xhr.setRequestHeader("Content-Type", "application/json");
-
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState == 4 && xhr.status == 200) {
-            // TODO: redirect to somewhere nice
-
-            document.getElementById("output").innerHTML = "Your roken is " + xhr.responseText;
-        }
-    }
-
-    xhr.send(body);
-}
 
 /**
  * initApp handles setting up UI event listeners and registering Firebase auth listeners:
@@ -21,38 +5,63 @@ function sendRequest(method, url, body) {
  *    out, and that is where we update the UI.
  */
 function initApp() {
+    var config = {
+        apiKey: "AIzaSyDzeXU-9BUlSGaUlp28PZC8oweYYKR8x2c",
+        authDomain: "jkwng-identity.firebaseapp.com",
+    };
+
+    firebase.initializeApp(config);
+
     // Listening for auth state changes.
     // [START authstatelistener]
     firebase.auth().onAuthStateChanged(function(user) {
-    if (user) {
-        // User is signed in.
-        var displayName = user.displayName;
-        var email = user.email;
-        var emailVerified = user.emailVerified;
-        var photoURL = user.photoURL;
-        var isAnonymous = user.isAnonymous;
-        var uid = user.uid;
-        var providerData = user.providerData;
-        // [START_EXCLUDE]
-        //document.getElementById('login').textContent = 'Signed in';
-        //document.getElementById('quickstart-sign-in').textContent = 'Sign out';
-        //document.getElementById('quickstart-account-details').textContent = JSON.stringify(user, null, '  ');
-        // [END_EXCLUDE]
-    } else {
-        // User is signed out.
-        // [START_EXCLUDE]
-        document.getElementById('quickstart-sign-in-status').textContent = 'Signed out';
-        document.getElementById('quickstart-sign-in').textContent = 'Sign in';
-        document.getElementById('quickstart-account-details').textContent = 'null';
-        // [END_EXCLUDE]
-    }
-    // [START_EXCLUDE]
-    document.getElementById('quickstart-sign-in').disabled = false;
-    // [END_EXCLUDE]
-    });
-    // [END authstatelistener]
+        if (user) {
+            document.getElementById('login').textContent = 'Sign out';
+            // User is signed in.
+            var uid = user.uid;
 
-    document.getElementById('login').addEventListener('click', toggleSignIn, false);
+            firebase.auth().currentUser.getIdToken(true).then ((idToken => {
+                var jwtPayload = JSON.parse(atob(idToken.split('.')[1]));
+                document.getElementById("output").innerHTML = `
+                    <table border="1" padding="1">
+                        <tr>
+                            <td>uid</td>
+                            <td>` + uid + `</td>
+                        </tr>
+                        <tr>
+                            <td>idToken</td>
+                            <td><pre>` + idToken + `</pre></td>
+                        </tr>
+                        <tr>
+                            <td>decodedToken</td>
+                            <td><pre>` + JSON.stringify(jwtPayload, null, 2) + `</pre></td>
+                    </table>`;
+
+            }))
+
+            // [START_EXCLUDE]
+            //document.getElementById('login').textContent = 'Signed in';
+            //document.getElementById('quickstart-sign-in').textContent = 'Sign out';
+            //document.getElementById('quickstart-account-details').textContent = JSON.stringify(user, null, '  ');
+            // [END_EXCLUDE]
+        } else {
+            document.getElementById('login').textContent = 'Sign in';
+
+            document.getElementById("output").innerHTML = "Not signed in.";
+            // User is signed out.
+            // [START_EXCLUDE]
+            //document.getElementById('quickstart-sign-in-status').textContent = 'Signed out';
+            //document.getElementById('quickstart-sign-in').textContent = 'Sign in';
+            //document.getElementById('quickstart-account-details').textContent = 'null';
+            // [END_EXCLUDE]
+        }
+// [START_EXCLUDE]
+//document.getElementById('quickstart-sign-in').disabled = false;
+// [END_EXCLUDE]
+});
+// [END authstatelistener]
+
+    document.getElementById('login').addEventListener('click', login, false);
 }
 
 function getHashValue(key) {
@@ -89,8 +98,42 @@ function login() {
     });
 
     console.log(formData);
+    const xhr = new XMLHttpRequest();
 
-    sendRequest("POST", "/authenticate", formData);
+    xhr.open("POST", "/authenticate", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            // TODO: redirect to somewhere nice?
+
+            // get the custom token from my backend
+            var token = xhr.responseText;
+            firebase.auth().signInWithCustomToken(token).then((value) => {
+                console.log(value)
+
+
+            }).catch(function(error) {
+                // Handle Errors here.
+                var errorCode = error.code;
+                var errorMessage = error.message;
+                // [START_EXCLUDE]
+                if (errorCode === 'auth/invalid-custom-token') {
+                    alert('The token you provided is not valid.');
+                } else {
+                    console.error(error);
+                }
+                // [END_EXCLUDE]
+            });
+
+        } else {
+            document.getElementById("output").innerHTML = "Login failed!";
+        }
+    }
+
+    xhr.send(formData);
+
+    //sendRequest("POST", "/authenticate", formData);
     /*
 
     var token = document.getElementById('tokentext').value;
