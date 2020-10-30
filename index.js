@@ -24,16 +24,29 @@ const iamcredentials = google.iamcredentials("v1");
 const KJUR = require('jsrsasign');
 const express = require('express');
 const app = express();
+const cors = require('cors')
 
 var googleAuth = new google.auth.GoogleAuth({
   scopes: 'https://www.googleapis.com/auth/cloud-platform'
 });
 
-var sub = '';
-googleAuth.getCredentials().then((res) => {
-  sub = res.client_email;
+// sub is the email address of the service account in a GCP project that has identity platform API turned on.  if the app
+// is a firebase app, you'll get one of these automatically with the right permissions.
+var sub = 'firebase-adminsdk-tyuf3@jkwng-identity.iam.gserviceaccount.com';
 
-  console.log("whoami: " + sub);
+// del will be the service account this node app runs as.   if you're using app engine or cloud run, we'll auto discover it. 
+// make sure permissions are set and we'll as follows
+// -- del needs roles/iam.serviceAccountTokenCreator on sub
+var del;
+googleAuth.getCredentials().then((res) => {
+  del = res.client_email;
+
+  // delegate - the service account that will create the JWT signing request
+  console.log("del: " + res.client_email);
+
+  // sub - the service account whose key will be used to sign the request
+  console.log("sub: " + sub);
+
 });
 
 googleAuth.getClient().then((value) => {
@@ -42,12 +55,17 @@ googleAuth.getClient().then((value) => {
   })
 });
 
-// TODO: get these on startup from metadata service?  or client lib
-var sPKCS8PEM = '';
-var kid = '';
+// load the userlist from disk
+const fs = require('fs');
 
+let rawdata = fs.readFileSync("users.json");
+let users = JSON.parse(rawdata);
+console.log("loaded users.json from disk: ", JSON.stringify(users));
 
 app.set('view engine', 'pug');
+
+// TODO:
+app.use(cors())
 
 app.use(express.json());
 
@@ -59,26 +77,23 @@ app.get('/', (req, res) => {
 });
 
 app.post('/authenticate', (req, res) => {
-  // NOTE: This is an example token generator to allow you to easily create
-  // Firebase custom auth tokens with a service account JSON file. You should
-  // integrate token generation and signing in to your own code using a Google
-  // client library for the language you work with.
+  //console.log(req.body);
 
-  // These values are extracted from the service account JSON.
-
-  console.log(req.body);
 
   var username = req.body.username;
   var password = req.body.password;
 
   // TODO: check if they match
-
-
-  // Generate an ID token and sign it with the private key.
-  var uid = username;
-
-  // Header
-  var oHeader = {alg: 'RS256', kid: kid, typ: 'JWT'};
+  if (!(username in users)) {
+    // send 401
+    res.status(401).send('login failed');
+    return;
+  }
+  if (users[username]['password'] !== password) {
+    // send 401
+    res.status(401).send('login failed');
+    return;
+  }
 
   // Payload
   var oPayload = {};
@@ -91,20 +106,25 @@ app.post('/authenticate', (req, res) => {
   oPayload.sub = sub;
   oPayload.user_id = username;
   oPayload.scope = 'https://www.googleapis.com/auth/identitytoolkit';
+  oPayload.claims = users[username]["attributes"];
 
-  var sHeader = JSON.stringify(oHeader);
   var sPayload = JSON.stringify(oPayload);
 
-  console.log("payload: " + JSON.stringify(oPayload));
+  var signJwtReqBody = {
+    name: "projects/-/serviceAccounts/" + sub,
+    requestBody: {
+      delegates: [
+        del
+      ],
+      payload: sPayload
+    }
+  };
+
+  console.log("payload: " + JSON.stringify(signJwtReqBody));
   
   // sign the JWT
   var sJWT;
-  iamcredentials.projects.serviceAccounts.signJwt({
-    name: "projects/-/serviceAccounts/" + sub,
-    requestBody: {
-      payload: sPayload
-    }
-  }).then((output) => {
+  iamcredentials.projects.serviceAccounts.signJwt(signJwtReqBody).then((output) => {
     sJWT = output.data.signedJwt;
     console.log(sJWT);
 
@@ -122,6 +142,7 @@ app.post('/authenticate', (req, res) => {
   //document.getElementById('linktokenbox').innerHTML = link;
 
 });
+
 
 // Start the server
 const PORT = process.env.PORT || 8080;

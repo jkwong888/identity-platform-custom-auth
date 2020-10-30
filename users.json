@@ -1,0 +1,50 @@
+{
+    "admin": {
+        "uid": "admin",
+        "password": "admin1",
+        "attributes": {
+            "isAdmin": 1,
+            "team": "admin"
+        }
+    },
+    "jon": {
+        "uid": "jon",
+        "password": "jon1",
+        "attributes": {
+            "isAdmin": 1,
+            "team": "red"
+        }
+    },
+    "jin": {
+        "uid": "jin",
+        "password": "jin1",
+        "attributes": {
+            "isAdmin": 0,
+            "team": "blue"
+        }
+    },
+    "jen": {
+        "uid": "jen",
+        "password": "jen1",
+        "attributes": {
+            "isAdmin": 0,
+            "team": "green"
+        }
+    },
+    "jan": {
+        "uid": "jan",
+        "password": "jan1",
+        "attributes": {
+            "isAdmin": 0,
+            "team": "green"
+        }
+    },
+    "jun": {
+        "uid": "jun",
+        "password": "jun1",
+        "attributes": {
+            "isAdmin": 0,
+            "team": "yellow"
+        }
+    }
+}
