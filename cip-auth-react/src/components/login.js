@@ -99,8 +99,8 @@ class LoginLinkBase extends Component {
         return (
         <AuthUserContext.Consumer>
             {
-                authUser  => authUser
-                    ? <Link to='/' onClick={this.props.firebase.doSignOut}>Logout</Link>
+                auth  => auth.uid
+                    ? <Link to='/' onClick={auth.doSignOut}>Logout</Link>
                     : <Link to="/login">Login</Link> 
             }
         </AuthUserContext.Consumer>
@@ -108,8 +108,8 @@ class LoginLinkBase extends Component {
     }
 }
 
-const LoginForm = withRouter(withFirebase(LoginFormBase));
-const LoginLink = withFirebase(LoginLinkBase);
+const LoginForm = withRouter(withAuthentication(LoginFormBase));
+const LoginLink = withAuthentication(LoginLinkBase);
 
 export default Login;
 

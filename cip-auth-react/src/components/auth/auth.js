@@ -1,43 +1,45 @@
 import React, { Component } from 'react';
 
 import AuthUserContext from './context';
-import { withFirebase } from '../firebase';
+import { getCustomToken } from '../../service';
+import Firebase from '../firebase';
 
-const withAuthentication = Component => {
-    class WithAuthentication extends Component {
-        constructor(props) {
-            super(props);
+class Auth {
+    constructor() {
+        this.firebase = new Firebase();
 
-            this.state = {
-                authUser: null,
-            };
-        }
-
-        componentDidMount() {
-            console.log(this.props.firebase.auth);
-            this.listener = this.props.firebase.auth.onAuthStateChanged(
-                authUser => {
-                    authUser
-                        ? this.setState({ authUser })
-                        : this.setState({ authUser: null })
-                }
-            );
-        }
-
-        componentWillUnmount() {
-            this.listener();
-        }
-
-        render() {
-            return (
-                <AuthUserContext.Provider value={this.state.authUser}>
-                    <Component {...this.props} />
-                </AuthUserContext.Provider>
-            );
-        }
+        this.uid = null;
+        this.idToken = null;
     }
 
-    return withFirebase(WithAuthentication);
-};
+    doSignIn = (username, password) => {
+        // login backend, then login firebase to get firebase managed token
+        getCustomToken(username, password).then((token) => {
+            //console.log(token);
+            this.firebase
+                .doSignInWithCustomToken(token)
+                .then(idToken => {
+                    this.uid = this.firebase.auth.currentUser.uid;
+                    this.idToken = idToken;
+                    return idToken;
+                })
+        }).catch((error) => {
+            throw error;
+        });
 
+    }
+    
+    doSignOut = () => {
+        this.firebase.doSignOut().then(() => {
+            this.uid = null;
+            this.idToken = null;
+        });
+    }
+}
+
+
+
+
+
+export default Auth;
 export default withAuthentication;
