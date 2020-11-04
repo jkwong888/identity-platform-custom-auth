@@ -3,12 +3,13 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import Auth, { AuthUserContext } from './components/auth';
+
+import AppProvider from './context/app';
 
 ReactDOM.render(
-  <AuthUserContext.Provider value={new Auth()}>
+  <AppProvider>
     <App />
-  </AuthUserContext.Provider>,
+  </AppProvider>,
   document.getElementById('root')
 );
 
