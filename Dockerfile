@@ -42,7 +42,7 @@ RUN npm install --verbose --only=production
 # Copy local code to the container image.
 COPY . ./
 
-COPY /usr/rc/app/cip-auth-react/build ./cip-auth-react/build
+COPY --from=react-builder /usr/src/app/build ./cip-auth-react/build
 
 EXPOSE 8080
 

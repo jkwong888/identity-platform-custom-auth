@@ -7,7 +7,7 @@ import { useAuth } from './auth';
 const ServiceContext = React.createContext()
 
 const defaultOptions = {
-    baseURL: 'http://10.11.0.37:8080',
+    //baseURL: 'http://10.11.0.37:8080',
     headers: {
         'Content-Type': 'application/json',
     },

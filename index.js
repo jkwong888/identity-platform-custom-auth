@@ -283,7 +283,7 @@ app.post('/authenticate', (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname+'/cip-auth-react/build'));
+  res.sendFile(path.join(__dirname+'/build'));
 });
 
 // Start the server
