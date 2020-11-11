@@ -2,6 +2,11 @@ import React from 'react';
 import app from 'firebase/app';
 import 'firebase/auth';
 
+/* 
+   we used the firebase auth library here for laziness' sake.
+   you can call the APIs directly to sign in with a custom token using the docs here:
+   https://cloud.google.com/identity-platform/docs/use-rest-api
+*/
 const FirebaseContext = React.createContext(null);
 
 const config = {
