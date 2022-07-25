@@ -5,28 +5,39 @@ import { useAuth } from '../context/auth';
 
 function UnauthenticatedHome(props) {
     const service = useService();
-    const [data, setData] = useState({uid: null, error: null});
+    const [data, setData] = useState({
+        uid: null, 
+        error: null
+    });
 
     const getHomepage = useCallback(() => {
-        service.svc.get('/homepage')
+        service.getHomepage()
             .then((response, err) => {
-                console.log(response);
-                setData({uid: response.data.uid, error: null});
+                //console.log(response);
+                setData({
+                    uid: response.uid, 
+                    error: null
+                });
             }).catch((error) => {
                 console.log(error);
-                setData({uid: null, error: error.response.data});
+                setData({
+                    uid: null, 
+                    error: error,
+                });
             });;
 
-    }, [service.svc]);
+    }, [service]);
 
     useEffect(() => {
         getHomepage();
 
         return function cleanup() {
-            //setUid(null);
-            //setError(null);
+            setData({
+                uid: null, 
+                error: null,
+            });
         }
-    }, []);
+    }, [getHomepage]);
 
 
     return (
@@ -40,37 +51,50 @@ function UnauthenticatedHome(props) {
 
 function AuthenticatedHome(props) {
     const service = useService();
-    const [data, setData] = useState({uid: null, team: null, isAdmin: null, error: null});
+    const [data, setData] = useState({
+        uid: null, 
+        team: null, 
+        isAdmin: false, 
+        email: null,
+        error: null
+    });
 
     const getHomepage = useCallback(() => {
-        service.svc.get('/homepage')
+        service.getHomepage()
             .then((response, err) => {
-                console.log(response);
+                //console.log(response);
                 setData({
-                    uid: response.data.uid,
-                    team: response.data.team,
-                    isAdmin: response.data.isAdmin,
+                    uid: response.uid,
+                    team: response.team,
+                    isAdmin: response.isAdmin,
+                    email: response.email,
                     error: null,
                 });
             }).catch((error) => {
-                console.log(error);
+                //console.log(error);
                 setData({
                     uid: null,
                     team: null,
-                    isAdmin: null,
-                    error: error.response.data,
+                    isAdmin: false,
+                    email: null,
+                    error: error,
                 });
 
             });
 
-    }, [service.svc]);
+    }, [service]);
 
     useEffect(() => {
         getHomepage();
 
         return function cleanup() {
-            //setUid(null);
-            //setError(null);
+            setData({
+                uid: null,
+                team: null,
+                isAdmin: false,
+                email: null,
+                error: null
+            });
         }
 
     }, [getHomepage]);
@@ -80,7 +104,7 @@ function AuthenticatedHome(props) {
         ? <div>Error: {data.error}</div>
         : <div className="Home">
             <div>
-                Hi there {data.uid}
+                Hi there {data.email}
             </div>
             <div>
                 Token contents:
@@ -90,6 +114,11 @@ function AuthenticatedHome(props) {
                             <td>uid</td>
                             <td>{data.uid}</td>
                         </tr>
+                        <tr>
+                            <td>email</td>
+                            <td>{data.email}</td>
+                        </tr>
+
                         <tr>
                             <td>team</td>
                             <td>{data.team}</td>

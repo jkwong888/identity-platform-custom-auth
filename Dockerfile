@@ -26,7 +26,7 @@ COPY cip-auth-react ./
 
 RUN cd cip-auth-react && npm install --loglevel verbose  --only=production && npm run-script build
 
-FROM node:12-slim
+FROM node:12-slim as typescript-builder
 
 WORKDIR /usr/src/app
 # Copy application dependency manifests to the container image.
@@ -34,15 +34,24 @@ WORKDIR /usr/src/app
 # Copying this first prevents re-running npm install on every code change.
 COPY package*.json ./
 
-# Install production dependencies.
-# If you add a package-lock.json, speed your build by switching to 'npm ci'.
-# RUN npm ci --only=production
-RUN npm install --verbose --only=production
-
 # Copy local code to the container image.
 COPY . ./
 
+# Install production dependencies.
+# If you add a package-lock.json, speed your build by switching to 'npm ci'.
+# RUN npm ci --only=production
+RUN npm install --verbose
+
+FROM node:12-slim 
+
+WORKDIR /usr/src/app
+
+COPY package.json ./
+RUN npm install --verbose --only=production
+
 COPY --from=react-builder /usr/src/app/build ./cip-auth-react/build
+COPY --from=typescript-builder /usr/src/app/dist ./
+COPY users.json ./
 
 EXPOSE 8080
 

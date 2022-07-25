@@ -36,3 +36,29 @@ code {
 .header .active {
   color: #2c7613;
 }
+
+.List {
+  border: 1px solid #d9dddd;
+}
+
+.ListItemEven,
+.ListItemOdd {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ListItemEven:hover, .ListItemOdd:hover {
+  background-color: lightcyan;
+}
+
+.ListItemSelected {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: lightblue; 
+}
+
+.ListItemEven {
+  background-color: #f3f3f3;
+}

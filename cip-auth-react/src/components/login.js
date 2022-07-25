@@ -27,7 +27,7 @@ class LoginFormBase extends Component {
         //console.log(this.context);
         this.context.doSignIn(this.state.username, this.state.password)
             .then((token) => {
-                console.log(token);
+                //console.log(token);
                 this.setState({
                     username: '',
                     password: '',
@@ -58,25 +58,44 @@ class LoginFormBase extends Component {
             password === '';
 
         return (
-                <form onSubmit= {this.onSubmit}>
-                    <input
-                        name="username"
-                        value={username}
-                        onChange={this.onChange}
-                        type="text"
-                        placeholder="Username"
-                    />
-                    <input
-                        name="password"
-                        value={password}
-                        onChange={this.onChange}
-                        type="password"
-                        placeholder="Password"
-                    />
-                    <button disabled={isInvalid} type="submit">Login</button>
+            <form onSubmit= {this.onSubmit}>
+            <table>
+                <tbody>
+                    <tr>
+                        <td>
+                            <input
+                                name="username"
+                                value={username}
+                                onChange={this.onChange}
+                                type="text"
+                                placeholder="Username"
+                            />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input
+                                name="password"
+                                value={password}
+                                onChange={this.onChange}
+                                type="password"
+                                placeholder="Password"
+                            />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button disabled={isInvalid} type="submit">Login</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            {error && <p>{error.message}</p>}
+                        </td>
+                    </tr>
 
-                    {error && <p>{error.message}</p>}
-
+                </tbody>
+            </table>
                 </form>
         )
     }
@@ -87,23 +106,39 @@ function LoginLink(props) {
     const auth = useAuth();
     const history = useHistory();
 
-    const [uid, setUid] = useState();
+    const [
+        userData, setUserData,
+    ] = useState({
+        uid: null,
+        email: null,
+        isLoggedIn: false,
+    });
 
     const doSignOut = () => {
         auth.doSignOut().then(() => {
-            setUid(auth.authData.uid);
+            setUserData({
+                uid: null,
+                email: null,
+                isLoggedIn: false,
+            });
             history.push('/');
         });
     }
 
     useEffect(() => {
-        setUid(auth.authData.uid);
+        setUserData({
+            uid: auth.authData.uid,
+            email: auth.authData.email,
+            isLoggedIn : auth.authData.uid != null,
+        });
     }, [auth.authData]);
 
     //console.log(auth);
-    return auth.authData.uid
-                ? <Link to='/' onClick={doSignOut}>Logout {uid}</Link>
-                : <Link to="/login">Login</Link> ;
+    if (userData.isLoggedIn) {
+        return <Link to='/' onClick={doSignOut}>Logout {userData.email}</Link>;
+    } else {
+        return <Link to='/login'>Login</Link>;
+    }
 }
 
 const LoginForm = withRouter(LoginFormBase);

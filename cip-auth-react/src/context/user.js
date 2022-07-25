@@ -9,7 +9,11 @@ function UserProvider(props) {
     const auth = useAuth();
 
     return (
-        <UserContext.Provider value={ auth ? auth.uid : null} {...props} />
+        <UserContext.Provider 
+            value={ auth ? auth.email : null} {...props} 
+        >
+            {props.children}
+        </UserContext.Provider>
     );
 }
 

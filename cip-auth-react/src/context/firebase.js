@@ -1,6 +1,6 @@
 import React from 'react';
-import app from 'firebase/app';
-import 'firebase/auth';
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInWithEmailAndPassword, signInWithCustomToken, signOut } from 'firebase/auth';
 
 /* 
    we used the firebase auth library here for laziness' sake.
@@ -16,17 +16,20 @@ const config = {
 
 class Firebase {
     constructor() {
-        app.initializeApp(config);
+        const app = initializeApp(config);
 
-        this.auth = app.auth();
+        this.auth = getAuth(app);
     }
 
     onAuthStateChanged = (authUser) => this.auth.onAuthStateChanged(authUser);
 
+    doSignInWithEmailPassword = (email, password) => 
+        signInWithEmailAndPassword(this.auth, email, password);
+
     doSignInWithCustomToken = (token) => 
-        this.auth.signInWithCustomToken(token);
+        signInWithCustomToken(this.auth.token);
     
-    doSignOut = () => this.auth.signOut();
+    doSignOut = () => signOut(this.auth);
 }
 
 function FirebaseProvider(props) {

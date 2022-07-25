@@ -3,7 +3,7 @@
         "uid": "admin",
         "password": "admin1",
         "attributes": {
-            "isAdmin": 1,
+            "isAdmin": true,
             "team": "admin"
         }
     },
@@ -11,7 +11,7 @@
         "uid": "jon",
         "password": "jon1",
         "attributes": {
-            "isAdmin": 1,
+            "isAdmin": true,
             "team": "red"
         }
     },
@@ -19,7 +19,6 @@
         "uid": "jin",
         "password": "jin1",
         "attributes": {
-            "isAdmin": 0,
             "team": "blue"
         }
     },
@@ -27,7 +26,6 @@
         "uid": "jen",
         "password": "jen1",
         "attributes": {
-            "isAdmin": 0,
             "team": "green"
         }
     },
@@ -35,7 +33,6 @@
         "uid": "jan",
         "password": "jan1",
         "attributes": {
-            "isAdmin": 0,
             "team": "green"
         }
     },
@@ -43,8 +40,14 @@
         "uid": "jun",
         "password": "jun1",
         "attributes": {
-            "isAdmin": 0,
             "team": "yellow"
         }
+    },
+    "jeffrey.kwong@gmail.com": {
+        "attributes": {
+            "isAdmin": true,
+            "team": "admin"
+        }
     }
+
 }
