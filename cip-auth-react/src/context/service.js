@@ -7,7 +7,7 @@ import { useAuth } from './auth';
 const ServiceContext = React.createContext()
 
 const defaultOptions = {
-    baseURL: 'http://localhost:22695',
+    //baseURL: 'http://localhost:22695',
     headers: {
         'Content-Type': 'application/json',
     },
