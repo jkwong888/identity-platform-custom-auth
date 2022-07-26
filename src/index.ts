@@ -12,20 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { appendFile } from "fs";
-
-
 const {google} = require('googleapis');
 const iamcredentials = google.iamcredentials("v1");
 import admin from 'firebase-admin';
 import { getAuth }  from 'firebase-admin/auth';
 
 const kjur = require('jsrsasign');
-
 const https = require('https');
 const express = require('express');
 const path = require('path');
 const morgan = require('morgan');
+const fs = require('fs');
 
 const app = express();
 const cors = require('cors')
@@ -34,29 +31,36 @@ const googleAuth = new google.auth.GoogleAuth({
   scopes: 'https://www.googleapis.com/auth/cloud-platform'
 });
 
-const GOOGLE_CIP_PROJECT = 'jkwng-identity';
+const GOOGLE_CIP_PROJECT = process.env.CLOUD_IDENTITY_PROJECT || "jkwng-identity";
 const GOOGLE_SECURE_TOKEN_URL = 'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com';
 const GOOGLE_SECURE_TOKEN_ISS_PREFIX = 'https://securetoken.google.com/';
 const GOOGLE_SECURE_TOKEN_ISS = GOOGLE_SECURE_TOKEN_ISS_PREFIX + GOOGLE_CIP_PROJECT;
 
-// sub is the email address of the service account in a GCP project that has identity platform API turned on.  if the app
-// is a firebase app, you'll get one of these automatically with the right permissions and can make sub and del the same value
-const sub = 'firebase-adminsdk-tyuf3@jkwng-identity.iam.gserviceaccount.com';
-
-// del will be the service account this node app runs as.   if you're using app engine or cloud run, we'll auto discover it. 
-// make sure permissions are set and we'll as follows
-// -- del needs roles/iam.serviceAccountTokenCreator on sub
+/* del will be the service account this node app runs as.   if you're using app engine or cloud run, we'll auto discover it. 
+ * make sure permissions are set and we'll as follows
+ * - roles/iam.serviceAccountTokenCreator on sub
+ * - roles/firebaseauth.admin in the project cloud identity platform is in (CLOUD_IDENTITY_PROJECT), in order to list users
+ */
 var del;
+
+/* sub is the email address of the service account in a GCP project that has identity platform API turned on.  if the app
+ * is a firebase app, you'll get one of these automatically with the right permissions.
+ * if you're running the backend in the same project as identity platform, you can make sub and del the same value.
+ * again, del needs roles/iam.serviceAccountTokenCreator on sub, even if they are the same, because custom tokens need to be signed by sub
+ * sub should have the following role in CLOUD_IDENTITY_PROJECT:
+ * - roles/firebase.sdkAdminServiceAgent in the project cloud identity platform is in (CLOUD_IDENTITY_PROJECT)
+ */
+var sub;
+
 googleAuth.getCredentials().then((res) => {
   del = res.client_email;
+  sub = process.env.SUB || del; //'firebase-adminsdk-tyuf3@jkwng-identity.iam.gserviceaccount.com';
 
   // delegate - the service account that will create the JWT signing request
   console.log("del: " + res.client_email);
 
   // sub - the service account whose key will be used to sign the request
   console.log("sub: " + sub);
-
-  getOauthToken();
 });
 
 googleAuth.getClient().then((value) => {
@@ -66,42 +70,13 @@ googleAuth.getClient().then((value) => {
 
 });
 
-function getOauthToken() {
-  // sign using sub's private key
-  var generateAccessTokenReq = {
-    name: "projects/-/serviceAccounts/" + sub,
-    requestBody: {
-      scope: [
-        "openid",
-        "https://www.googleapis.com/auth/cloud-platform",
-      ],
-      lifetime: "3600s",
-    }
-  };
-  //console.log(generateAccessTokenReq);
+//console.log(googleAuth);
 
-  iamcredentials.projects.serviceAccounts.generateAccessToken(generateAccessTokenReq).then((output) => {
-    //console.log(sJWT);
-    //console.log(output);
-
-  }).catch((reason) => {
-    console.log("failed to access token: " + reason);
-  });
-
-}
-
-console.log(googleAuth);
-
-const firebaseAdmin = admin.initializeApp(
-  {
-    //credential: googleAuth,
+const firebaseAdmin = admin.initializeApp({
     projectId: GOOGLE_CIP_PROJECT,
-  }
-);
-
+});
 
 // load the userlist from disk
-const fs = require('fs');
 
 const rawdata = fs.readFileSync("users.json");
 const users = JSON.parse(rawdata);
@@ -120,7 +95,6 @@ https.get(GOOGLE_SECURE_TOKEN_URL, {}, (res) => {
     for (const [kid, cert] of Object.entries(googleSecureTokenCertsTmp)) {
       var key = kjur.KEYUTIL.getKey(cert);
       googleSecureTokenCerts[kid] = key;
-
     }
     //console.log(googleSecureTokenCerts);
   })
@@ -173,14 +147,14 @@ function syncAdminClaim(firebaseTokenObj) {
   var user = firebaseTokenObj['email'];
   var isAdmin = firebaseTokenObj['isAdmin'];
 
-  // if firebase doesn't say we're admin, check the config file to see if we are admin and update it
+  // if firebase doesn't say we're admin, check the config file to see if we are admin and update firebase with the custom claim
   if (user in users && 'attributes' in users[user]) {
     console.log(`${user} is admin: ${users[user]['attributes']['isAdmin']}`);
     dbAdmin = users[user]['attributes']['isAdmin'];
   }
 
   if (dbAdmin !== isAdmin) {
-  // TODO: tell firebase we're admin by passing a custom claim back to firebase.  
+    // tell firebase we're admin by passing a custom claim back to firebase.  
     console.log(`sync firebase admin claim for: ${user}: ${dbAdmin}...`);
     admin.auth().setCustomUserClaims(uid, {isAdmin: dbAdmin});
   }
@@ -297,8 +271,9 @@ function isAdmin(req, res, next) {
 
 app.get('/homepage', authenticateToken, (req, res) => {
   const defaultResponse = {
-    uid: "nobody",
-    team: "nobody",
+    uid: null,
+    team: null,
+    email: null,
     isAdmin: false,
   }
 
@@ -355,11 +330,11 @@ app.get('/listUsers', authenticateToken, isAdmin, async (req, res) => {
       });
   };
 
+  // firebase admin to get all users
   await listAllUsers("0");
 
   //console.log(defaultResponse);
 
-  // firebase admin to get all users
   res.status(200).json(defaultResponse);
 
 });
@@ -415,7 +390,7 @@ app.post('/impersonate', authenticateToken, isAdmin, (req, res) => {
   });
 });
 
-/* custom authentication using the passwords in the json database */
+/* custom authentication using the passwords in the json database -- UNUSED */
 app.post('/authenticate', (req, res) => {
   var username = req.body.username;
   var password = req.body.password;
@@ -477,10 +452,6 @@ app.post('/authenticate', (req, res) => {
     console.log("failed to sign: " + reason);
     res.status(500).send(reason);
   });
-});
-
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname+'/build'));
 });
 
 // Start the server

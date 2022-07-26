@@ -14,7 +14,6 @@ const defaultOptions = {
     },
 };
 
-
 class Service {
     constructor() {
         this.svc = axios.create(defaultOptions);

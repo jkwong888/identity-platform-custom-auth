@@ -1,60 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
 import { useService } from '../context/service';
-import { useAuth } from '../context/auth';
 
-function UnauthenticatedHome(props) {
-    const service = useService();
-    const [data, setData] = useState({
-        uid: null, 
-        error: null
-    });
-
-    const getHomepage = useCallback(() => {
-        service.getHomepage()
-            .then((response, err) => {
-                //console.log(response);
-                setData({
-                    uid: response.uid, 
-                    error: null
-                });
-            }).catch((error) => {
-                console.log(error);
-                setData({
-                    uid: null, 
-                    error: error,
-                });
-            });;
-
-    }, [service]);
-
-    useEffect(() => {
-        getHomepage();
-
-        return function cleanup() {
-            setData({
-                uid: null, 
-                error: null,
-            });
-        }
-    }, [getHomepage]);
-
-
-    return (
-        data.error 
-            ? <div>Error: {data.error}</div> 
-            : <div className="Home">
-                Please log in!  You are: {data.uid}
-              </div>
-    );
-}
-
-function AuthenticatedHome(props) {
+function Home(props) {
     const service = useService();
     const [data, setData] = useState({
         uid: null, 
         team: null, 
-        isAdmin: false, 
+        isAdmin: "false", 
         email: null,
         error: null
     });
@@ -66,7 +19,7 @@ function AuthenticatedHome(props) {
                 setData({
                     uid: response.uid,
                     team: response.team,
-                    isAdmin: response.isAdmin,
+                    isAdmin: String(response.isAdmin),
                     email: response.email,
                     error: null,
                 });
@@ -75,7 +28,7 @@ function AuthenticatedHome(props) {
                 setData({
                     uid: null,
                     team: null,
-                    isAdmin: false,
+                    isAdmin: "false",
                     email: null,
                     error: error,
                 });
@@ -91,7 +44,7 @@ function AuthenticatedHome(props) {
             setData({
                 uid: null,
                 team: null,
-                isAdmin: false,
+                isAdmin: "false",
                 email: null,
                 error: null
             });
@@ -104,17 +57,18 @@ function AuthenticatedHome(props) {
         ? <div>Error: {data.error}</div>
         : <div className="Home" align="center">
             <div>
-                Hi there {data.email}
+                {data.uid ? `Hi there ${data.email}` : "Please log in!"}
             </div>
             <div>
                 <br></br>
             </div>
             <div>
+                { data.uid && 
                 <table>
                     <thead>
                         <tr>
                             <th align="center" colSpan="2">
-                                Token contents
+                                Homepage
                             </th>
                         </tr>
                     </thead>
@@ -138,18 +92,10 @@ function AuthenticatedHome(props) {
                         </tr>
                     </tbody>
                 </table>
+                }
             </div>
         </div>
     );
-}
-
-function Home(props) {
-    const auth = useAuth();
-    
-    //console.log(auth);
-    return auth.authData.uid
-                ? <AuthenticatedHome/>
-                : <UnauthenticatedHome/> ;
 }
 
 export default Home;
