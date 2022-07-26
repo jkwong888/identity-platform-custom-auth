@@ -3,10 +3,11 @@ import { BrowserRouter, Switch, Route, NavLink } from 'react-router-dom';
 
 import './App.css';
 
-import Login, { LoginLink } from './components/login';
+import Login from './components/login';
+import LoginLink from './components/loginlink';
 import Home from './components/home';
 import Users from './components/userlist';
-import {useAuth} from './context/auth.js';
+import { useAuth } from './context/auth.js';
 
 //const App = () => {
 
@@ -14,7 +15,7 @@ function App(props) {
   const auth = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
 
-  console.log(auth.authData);
+  //console.log(auth.authData);
   useEffect(() => {
     setIsAdmin(auth.authData.isAdmin);
 
@@ -22,7 +23,7 @@ function App(props) {
       setIsAdmin(false);
     }
 
-  }, [auth, isAdmin]);
+  }, [auth.authData.isAdmin]);
 
   return <div className="App">
     <BrowserRouter>

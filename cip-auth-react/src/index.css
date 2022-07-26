@@ -37,6 +37,20 @@ code {
   color: #2c7613;
 }
 
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.LoginForm {
+  border: 0px solid black;
+  border-collapse: collapse;
+}
+
 .List {
   border: 1px solid #d9dddd;
 }

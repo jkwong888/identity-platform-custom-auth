@@ -102,13 +102,22 @@ function AuthenticatedHome(props) {
     return (
         data.error 
         ? <div>Error: {data.error}</div>
-        : <div className="Home">
+        : <div className="Home" align="center">
             <div>
                 Hi there {data.email}
             </div>
             <div>
-                Token contents:
+                <br></br>
+            </div>
+            <div>
                 <table>
+                    <thead>
+                        <tr>
+                            <th align="center" colSpan="2">
+                                Token contents
+                            </th>
+                        </tr>
+                    </thead>
                     <tbody>
                         <tr>
                             <td>uid</td>

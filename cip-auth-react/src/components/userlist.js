@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, memo }  from 'react';
 import { useService } from '../context/service';
 import memoize from 'memoize-one';
 import { FixedSizeList as List, areEqual } from 'react-window';
-import { withRouter } from 'react-router-dom';
+import { withRouter, useHistory } from 'react-router-dom';
 
 const createItemData = memoize((items, selectedUid, toggleItemActive) => ({
     items,
@@ -17,7 +17,7 @@ const User = memo(({data, index, style}) => {
     return ( 
         <div 
             style={style}
-            className={ selectedUid == uid ? "ListItemSelected" : index % 2 ? "ListItemOdd" : "ListItemEven"}
+            className={ selectedUid === uid ? "ListItemSelected" : index % 2 ? "ListItemOdd" : "ListItemEven"}
             key={uid}
             onClick = {() => toggleItemActive(uid)}
             >
@@ -28,12 +28,13 @@ const User = memo(({data, index, style}) => {
 
 function UserListBase(props) {
     const service = useService();
+    const history = useHistory();
+
     const [userListData, setUserListData] = useState({
         users: [], 
         selectedUid: null,
         error: null
     });
-
 
     const getUserList = useCallback(() => {
         service.getUserList()
@@ -67,21 +68,35 @@ function UserListBase(props) {
         }
     }, [getUserList]);
 
+    const onSubmit = (event) => {
+        //console.log(this.context);
+        service.impersonate(userListData.selectedUid)
+            .then((token) => {
+                history.push('/');
+        }).catch((error) => {
+            setUserListData({
+                users: userListData.users,
+                selectedUid: userListData.selectedUid,
+                error: error,
+            });
+        });
+
+        event.preventDefault();
+    };
 
     const itemKey = (index, userData) => {
-        const { items, selectedUid, toggleItemActive } = userData;
-        const item = items[index];
+        const item = userData.items[index];
         return item.uid;
     };
 
-    function selectUser(uid) {
+    const selectUser = (uid) => {
         console.log("selected user is now: " + uid);
         setUserListData({
             users: userListData.users,
             selectedUid: uid,
             error: null,
         })
-    }
+    };
 
     const userList = createItemData(userListData.users, userListData.selectedUid, selectUser);
 
@@ -90,20 +105,25 @@ function UserListBase(props) {
             <div>
                 <h3>UserList</h3>
             </div>
-            <div>
-                <List
-                    className="List"
-                    itemKey={itemKey}
-                    itemData={userList}
-                    innerElementType="ul"
-                    height={450}
-                    itemSize={35}
-                    width={400}
-                    itemCount={userListData.users.length}
-                >
-                    {User}
-                </List>
-            </div>
+            <form onSubmit= {onSubmit}>
+                <div>
+                    <List
+                        className="List"
+                        itemKey={itemKey}
+                        itemData={userList}
+                        innerElementType="ul"
+                        height={450}
+                        itemSize={35}
+                        width={400}
+                        itemCount={userListData.users.length}
+                    >
+                        {User}
+                    </List>
+                </div>
+                <div>
+                    <button disabled={userListData.selectedUid == null} type="submit">Impersonate</button>
+                </div>
+            </form>
         </div>
     );
 }

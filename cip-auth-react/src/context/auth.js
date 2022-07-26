@@ -2,16 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useFirebase } from './firebase';
 import jwt_decode from "jwt-decode";
 
-import { getCustomToken } from './service';
-
 const AuthContext = React.createContext()
 
 function AuthProvider(props) {
     const [authData, setAuthData] = useState({
         uid: null, 
         idToken: null, 
+        impersonatedIdToken: null, 
         email: null, 
-        isImpersonated: false,
         isAdmin: false,
     });
     const firebase = useFirebase();
@@ -33,7 +31,7 @@ function AuthProvider(props) {
                     uid: firebase.auth.currentUser.uid, 
                     email: firebase.auth.currentUser.email, 
                     idToken: idToken,
-                    isImpersonated: false,
+                    impersonatedIdToken: null,
                     isAdmin: decoded.isAdmin,
                 })
 
@@ -43,38 +41,41 @@ function AuthProvider(props) {
             });
     }
 
-    const doImpersonate = (customToken) => {
-        // login backend, then login firebase to get firebase managed token
-        //console.log(token);
-        firebase
-            .doSignInWithCustomToken(customToken)
-            .then(idToken => {
-                localStorage.setItem("impersonatedIdToken", idToken);
+    const doImpersonate = (idToken) => {
+        // service layer called our backend and called firebase, set the impersonatedId Token
+        localStorage.setItem("impersonatedIdToken", idToken);
+        var decoded = jwt_decode(idToken);
+        setAuthData({
+            uid: decoded.user_id, 
+            email: decoded.email, 
+            idToken: authData.idToken,
+            impersonatedIdToken: idToken,
+            isAdmin: decoded.isAdmin,
+        })
+    }
 
-                var decoded = jwt_decode(idToken);
-
-                setAuthData({
-                    uid: firebase.auth.currentUser.uid, 
-                    email: firebase.auth.currentUser.email, 
-                    idToken: idToken,
-                    isImpersonated: true,
-                    isAdmin: decoded.isAdmin,
-                })
-
-                return idToken;
-        }).catch((error) => {
-            throw error;
-        });
+    const stopImpersonate = () => {
+        // service layer called our backend and called firebase, set the impersonatedId Token
+        localStorage.setItem("impersonatedIdToken", null);
+        var decoded = jwt_decode(authData.idToken);
+        setAuthData({
+            uid: decoded.user_id, 
+            email: decoded.email, 
+            idToken: authData.idToken,
+            impersonatedIdToken: null,
+            isAdmin: decoded.isAdmin,
+        })
     }
     
     const doSignOut = () => {
         return firebase.doSignOut().then(() => {
             localStorage.setItem("idToken", null);
+            localStorage.setItem("impersonatedIdToken", null);
             setAuthData({
                 uid: null, 
                 idToken: null, 
                 email: null, 
-                isImpersonated: false, 
+                impersonatedIdToken: null,
                 isAdmin: false
             });
         });
@@ -95,7 +96,7 @@ function AuthProvider(props) {
                                 uid: authUser.uid, 
                                 idToken: idToken,
                                 email: authUser.email,
-                                isImpersonated: false,
+                                impersonatedIdToken: null,
                                 isAdmin: decoded.isAdmin,
                             })
                         }
@@ -119,7 +120,7 @@ function AuthProvider(props) {
                 uid: null, 
                 idToken: null,
                 email: null,
-                isImpersonated: false,
+                impersonatedIdToken: null,
                 isAdmin: false,
             });
         }
@@ -127,7 +128,7 @@ function AuthProvider(props) {
     }, [firebase]);
 
     return (
-        <AuthContext.Provider value={{ authData, doSignIn, doImpersonate, doSignOut }} {...props} />
+        <AuthContext.Provider value={{ authData, doSignIn, doImpersonate, stopImpersonate, doSignOut }} {...props} />
     );
 }
 

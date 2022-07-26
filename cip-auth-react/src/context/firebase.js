@@ -16,9 +16,8 @@ const config = {
 
 class Firebase {
     constructor() {
-        const app = initializeApp(config);
-
-        this.auth = getAuth(app);
+        this.app = initializeApp(config);
+        this.auth = getAuth(this.app);
     }
 
     onAuthStateChanged = (authUser) => this.auth.onAuthStateChanged(authUser);
@@ -27,7 +26,7 @@ class Firebase {
         signInWithEmailAndPassword(this.auth, email, password);
 
     doSignInWithCustomToken = (token) => 
-        signInWithCustomToken(this.auth.token);
+        signInWithCustomToken(this.auth, token);
     
     doSignOut = () => signOut(this.auth);
 }

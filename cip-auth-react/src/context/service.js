@@ -3,11 +3,12 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 import { useAuth } from './auth';
+import { useFirebase } from './firebase';
 
 const ServiceContext = React.createContext()
 
 const defaultOptions = {
-    //baseURL: 'http://localhost:22695',
+    baseURL: 'http://localhost:19562',
     headers: {
         'Content-Type': 'application/json',
     },
@@ -40,19 +41,26 @@ class Service {
     }
 
     setAuthToken = () => {
-        var token = localStorage.getItem('idToken');
         this.svc.defaults.headers.common['Authorization'] = '';
         delete this.svc.defaults.headers.common['Authorization'];
 
+        // if we have an impersonated token, use it
+        var impersonatedToken = localStorage.getItem('impersonatedIdToken');
+        if (impersonatedToken && impersonatedToken !== 'null') {
+            this.svc.defaults.headers.common['Authorization'] = `Bearer ${impersonatedToken}`;
+            return;
+        } 
+        
+        var token = localStorage.getItem('idToken');
         if (token && token !== 'null') {
             this.svc.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         }
     };
-
 }
 
 function ServiceProvider(props) {
     const auth = useAuth();
+    const firebase = useFirebase();
     const [idToken, setIdToken] = useState();
     const svc = new Service();
 
@@ -65,6 +73,9 @@ function ServiceProvider(props) {
             return response.data;
         });
     }
+
+    const signIn = (email, password) => auth.doSignIn(email, password);
+    const signOut = () => auth.doSignOut();
 
     /*
     const getCustomToken = (username, password) => {
@@ -87,11 +98,31 @@ function ServiceProvider(props) {
         return svc.post('/impersonate', {
                 uid: uid,
             })
-            .then((response) => {
+            .then(async (response) => {
             //console.log(response.status);
-            //console.log(response.data);
+                //console.log(`custom token is: ${response.data}`);
+                //console.log(`apiKey is: ${firebase.app.options.apiKey}`);
+                const fbResp = await axios.post('/v1/accounts:signInWithCustomToken', 
+                    {
+                        token: response.data,
+                        returnSecureToken: true,
+                    },
+                    {
+                        baseURL: "https://identitytoolkit.googleapis.com",
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        params: {
+                            key: firebase.app.options.apiKey,
+                        },
+                    }
+                )
+                //console.log(`firebase response is ${JSON.stringify(fbResp)}`);
 
-            return response.data;
+                // set the impersonated token in the auth layer
+                auth.doImpersonate(fbResp.data.idToken);
+
+                return fbResp.data.idToken;
         });
     }
 
@@ -110,7 +141,8 @@ function ServiceProvider(props) {
 
     return (
         <ServiceContext.Provider value={{
-            svc: new Service(),
+            signIn,
+            signOut,
             impersonate,
             getHomepage,
             getUserList,

@@ -1,6 +1,6 @@
-import React, { Component, useEffect, useState }  from 'react';
-import { useAuth, AuthContext } from '../context/auth';
-import { withRouter, Link, useHistory } from 'react-router-dom';
+import React, { Component }  from 'react';
+import { ServiceContext } from '../context/service';
+import { withRouter } from 'react-router-dom';
 
 function Login(props) {
     return (
@@ -12,7 +12,7 @@ function Login(props) {
 }
 
 class LoginFormBase extends Component {
-    static contextType = AuthContext;
+    static contextType = ServiceContext;
     constructor(props) {
         super(props);
 
@@ -25,7 +25,7 @@ class LoginFormBase extends Component {
 
     onSubmit = (event) => {
         //console.log(this.context);
-        this.context.doSignIn(this.state.username, this.state.password)
+        this.context.signIn(this.state.username, this.state.password)
             .then((token) => {
                 //console.log(token);
                 this.setState({
@@ -58,91 +58,51 @@ class LoginFormBase extends Component {
             password === '';
 
         return (
-            <form onSubmit= {this.onSubmit}>
-            <table>
-                <tbody>
-                    <tr>
-                        <td>
-                            <input
-                                name="username"
-                                value={username}
-                                onChange={this.onChange}
-                                type="text"
-                                placeholder="Username"
-                            />
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <input
-                                name="password"
-                                value={password}
-                                onChange={this.onChange}
-                                type="password"
-                                placeholder="Password"
-                            />
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <button disabled={isInvalid} type="submit">Login</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            {error && <p>{error.message}</p>}
-                        </td>
-                    </tr>
+            <div className="Home" align="center">
+                <form onSubmit={this.onSubmit}>
+                    <table className="LoginForm">
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <input
+                                        name="username"
+                                        value={username}
+                                        onChange={this.onChange}
+                                        type="text"
+                                        placeholder="Username"
+                                    />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input
+                                        name="password"
+                                        value={password}
+                                        onChange={this.onChange}
+                                        type="password"
+                                        placeholder="Password"
+                                    />
+                                </td>
+                            </tr>
+                            <tr align="right">
+                                <td>
+                                    <button disabled={isInvalid} type="submit">Login</button>
+                                </td>
+                            </tr>
+                            {error && <tr>
+                                <td>
+                                    {error && <p>{error.message}</p>}
+                                </td>
+                            </tr>
+                            }
 
-                </tbody>
-            </table>
+                        </tbody>
+                    </table>
                 </form>
+                </div>
         )
     }
 }
 
-
-function LoginLink(props) {
-    const auth = useAuth();
-    const history = useHistory();
-
-    const [
-        userData, setUserData,
-    ] = useState({
-        uid: null,
-        email: null,
-        isLoggedIn: false,
-    });
-
-    const doSignOut = () => {
-        auth.doSignOut().then(() => {
-            setUserData({
-                uid: null,
-                email: null,
-                isLoggedIn: false,
-            });
-            history.push('/');
-        });
-    }
-
-    useEffect(() => {
-        setUserData({
-            uid: auth.authData.uid,
-            email: auth.authData.email,
-            isLoggedIn : auth.authData.uid != null,
-        });
-    }, [auth.authData]);
-
-    //console.log(auth);
-    if (userData.isLoggedIn) {
-        return <Link to='/' onClick={doSignOut}>Logout {userData.email}</Link>;
-    } else {
-        return <Link to='/login'>Login</Link>;
-    }
-}
-
 const LoginForm = withRouter(LoginFormBase);
-
 export default Login;
-
-export { LoginLink };

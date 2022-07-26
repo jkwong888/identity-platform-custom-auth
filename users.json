@@ -1,53 +1,28 @@
 {
-    "admin": {
-        "uid": "admin",
-        "password": "admin1",
+    "admin@jkwong.com": {
         "attributes": {
             "isAdmin": true,
             "team": "admin"
         }
     },
-    "jon": {
-        "uid": "jon",
-        "password": "jon1",
+    "user1@jkwong.com": {
         "attributes": {
-            "isAdmin": true,
+            "isAdmin": false,
             "team": "red"
         }
     },
-    "jin": {
-        "uid": "jin",
-        "password": "jin1",
+    "user2@jkwong.com": {
         "attributes": {
+            "isAdmin": false,
+            "team": "green"
+        }
+    },
+    "user3@jkwong.com": {
+        "attributes": {
+            "isAdmin": false,
             "team": "blue"
         }
-    },
-    "jen": {
-        "uid": "jen",
-        "password": "jen1",
-        "attributes": {
-            "team": "green"
-        }
-    },
-    "jan": {
-        "uid": "jan",
-        "password": "jan1",
-        "attributes": {
-            "team": "green"
-        }
-    },
-    "jun": {
-        "uid": "jun",
-        "password": "jun1",
-        "attributes": {
-            "team": "yellow"
-        }
-    },
-    "jeffrey.kwong@gmail.com": {
-        "attributes": {
-            "isAdmin": true,
-            "team": "admin"
-        }
     }
+
 
 }

@@ -16,7 +16,7 @@
 
 # Use the official lightweight Node.js 10 image.
 # https://hub.docker.com/_/node
-FROM node:12-slim as react-builder
+FROM node:14-slim as react-builder
 
 # Create and change to the app directory.
 WORKDIR /usr/src/app
@@ -26,23 +26,29 @@ COPY cip-auth-react ./
 
 RUN cd cip-auth-react && npm install --loglevel verbose  --only=production && npm run-script build
 
-FROM node:12-slim as typescript-builder
+FROM node:14-slim as typescript-builder
 
 WORKDIR /usr/src/app
+
+RUN npm install -g typescript
+
 # Copy application dependency manifests to the container image.
 # A wildcard is used to ensure copying both package.json AND package-lock.json (when available).
 # Copying this first prevents re-running npm install on every code change.
 COPY package*.json ./
-
-# Copy local code to the container image.
-COPY . ./
 
 # Install production dependencies.
 # If you add a package-lock.json, speed your build by switching to 'npm ci'.
 # RUN npm ci --only=production
 RUN npm install --verbose
 
-FROM node:12-slim 
+# Copy local code to the container image.
+COPY tsconfig.json ./
+COPY src ./src
+
+RUN npm run-script build
+
+FROM node:14-slim 
 
 WORKDIR /usr/src/app
 

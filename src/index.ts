@@ -182,7 +182,7 @@ function syncAdminClaim(firebaseTokenObj) {
   if (dbAdmin !== isAdmin) {
   // TODO: tell firebase we're admin by passing a custom claim back to firebase.  
     console.log(`sync firebase admin claim for: ${user}: ${dbAdmin}...`);
-    admin.auth().setCustomUserClaims(uid, {isAdmin: true});
+    admin.auth().setCustomUserClaims(uid, {isAdmin: dbAdmin});
   }
 
   return dbAdmin;
@@ -299,7 +299,7 @@ app.get('/homepage', authenticateToken, (req, res) => {
   const defaultResponse = {
     uid: "nobody",
     team: "nobody",
-    isAdmin: 0,
+    isAdmin: false,
   }
 
   const token = getToken(req);
@@ -308,9 +308,21 @@ app.get('/homepage', authenticateToken, (req, res) => {
     return;
   }
 
+  var team = "none";
+  var isAdmin = false;
+  // grab team status from the users json
+  if (res.locals.email in users && 'attributes' in users[res.locals.email]) {
+    console.log(`${res.locals.email} team: ${users[res.locals.email]['attributes']['team']}`);
+    team = users[res.locals.email]['attributes']['team']
+  
+    // grab admin status from the users json
+    console.log(`${res.locals.email} isAdmin: ${users[res.locals.email]['attributes']['isAdmin']}`);
+    isAdmin = users[res.locals.email]['attributes']['isAdmin'];
+  }
+
   res.status(200).json({
-    isAdmin: res.locals.isAdmin,
-    team: res.locals.team,
+    isAdmin: isAdmin,
+    team: team,
     uid: res.locals.uid,
     email: res.locals.email,
   });
