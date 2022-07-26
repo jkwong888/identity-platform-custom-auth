@@ -8,7 +8,7 @@ import { useFirebase } from './firebase';
 const ServiceContext = React.createContext()
 
 const defaultOptions = {
-    baseURL: 'http://localhost:19562',
+    //baseURL: 'http://localhost:19562',
     headers: {
         'Content-Type': 'application/json',
     },
